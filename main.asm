@@ -11,8 +11,9 @@ Include irvine32.inc
 .data
 valueA DB ?
 valueB DB ?
-input1 DB "Please enter an input radix:",0ah,0dh,0
-input2 DB "Please enter a value, one character at a time, in your chosen radix:",0ah,0dh,0
+input1 DB "Please enter an input radix: (Allowed Inputs: (0-9)(a-z)(A-Z) for 0d-62d)",0ah,0dh,0
+input2 DB "Please the number A:",0ah,0dh,0
+input3 DB "Please the number B:",0ah,0dh,0
 inputRadix DB ?
 outputRadix DB ?
 
