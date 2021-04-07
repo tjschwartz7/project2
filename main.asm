@@ -28,12 +28,28 @@ outputRadix DB ?
 	MOV inputRadix, al
 	XOR eax, eax
 	MOV al, inputRadix
-	SUB al, 30h
-	CMP al, 0
+	CMP al, 30h
 	JL RadixInput
-	CMP al, 9
+	CMP al, 41h
+	JGE GreaterThan40h
+	CMP al, 39h
 	JG RadixInput
+	SUB al, 30h
+	JMP Done
+	GreaterThan40h:
+	CMP al, 61h
+	JGE GreaterThan60h
+	CMP al, 5Ah
+	JG RadixInput
+	SUB al, 1Dh
+	JMP Done
+	GreaterThan60h:
+	CMP al, 7Ah
+	JG RadixInput
+	SUB al, 57h
+	Done:
 	MOV  inputRadix, al
+	
 
 	
 
