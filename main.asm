@@ -29,6 +29,10 @@ outputRadix DB ?
 	MOV inputRadix, al
 	XOR eax, eax
 	MOV al, inputRadix
+	CMP al, 'x'
+	JE endOfProgram
+	cmp al, 'X'
+	JE endOfProgram
 	CMP al, 30h
 	JL RadixInput
 	CMP al, 41h
@@ -52,7 +56,7 @@ outputRadix DB ?
 	MOV  inputRadix, al
 	
 
-	
+	endOfProgram:
 
 	
 	INVOKE ExitProcess, 0
