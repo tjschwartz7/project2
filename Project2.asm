@@ -57,20 +57,40 @@ ReadNum PROC
 	call writestring
 	call readchar
 	call writechar
+	xor ebx, ebx
 	mov bl, al
 	mov edx, offset newLine
 	call writestring
 	mov edx, offset askNum
 	call writestring
+
+Check_Sign:
+
 	mov ecx, 32
 	mov esi, offset number
+	call readchar
+	call writechar
+	cmp al, 45
+	je Set_Negitive
+	cmp al, 10
+	jle Turned_To_Int
+	jmp Fix_Num_Val
+
+Set_Negitive:
+
+	mov dl, 1
+	push dl
 
 Read_Loop:
 	
 	call readchar
 	call writechar
+	cmp al, 10
+	jle Turned_To_Int
 	jmp Fix_Num_Val
+
 Turned_To_Num:
+
 	cmp al, bl
 	jge Error
 	mov [esi], al
@@ -114,11 +134,23 @@ Error:
 	mov edx, offset oopsie
 	call writestring
 	mov esi, offset number
-	jmp Read_Loop
+	jmp Check_Sign
 
+
+	;Convert the array to a regular int
 Turn_To_Int:
 
+	
+
+Loop_Thru_Num_Arr:
+	
+	
+
+
+Done:
+
 	popad
+	ret
 
 ReadNum ENDP
 
