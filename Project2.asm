@@ -73,7 +73,7 @@ Check_Sign:
 	cmp al, 45
 	je Set_Negitive
 	cmp al, 10
-	jle Turned_To_Int
+	jle Turned_To_Num
 	jmp Fix_Num_Val
 
 Set_Negitive:
@@ -86,7 +86,7 @@ Read_Loop:
 	call readchar
 	call writechar
 	cmp al, 10
-	jle Turned_To_Int
+	jle Turned_To_Num
 	jmp Fix_Num_Val
 
 Turned_To_Num:
