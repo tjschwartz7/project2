@@ -86,7 +86,7 @@ Read_Loop:
 	call readchar
 	call writechar
 	cmp al, 10
-	jle Turned_To_Num
+	je Turn_To_Int
 	jmp Fix_Num_Val
 
 Turned_To_Num:
