@@ -52,6 +52,8 @@ ReadNum PROC
 
 	pushad
 
+Start_Over:
+
 	;Get input for radix and number
 	mov edx, offset askRadix
 	call writestring
@@ -59,6 +61,29 @@ ReadNum PROC
 	call writechar
 	xor ebx, ebx
 	mov bl, al
+
+
+	cmp bl, 57
+	jg Radix_Letter
+	cmp bl, 48
+	jl Start_Over
+	sub bl, '0'
+	jmp Ready_Read
+Radix_Letter:
+	cmp bl, 90
+	jg Radix_Lowercase
+	cmp bl, 65
+	jl Start_Over
+	sub bl, 29
+Radix_Lowercase:
+	cmp bl, 122
+	jg Error
+	cmp bl, 97
+	jl Error
+	sub bl, 87
+
+Ready_Read:
+
 	mov edx, offset newLine
 	call writestring
 	mov edx, offset askNum
@@ -75,6 +100,7 @@ Check_Sign:
 	cmp al, 10
 	jle Turned_To_Num
 	jmp Fix_Num_Val
+	xor eax, eax
 
 Set_Negitive:
 
@@ -85,7 +111,7 @@ Read_Loop:
 	
 	call readchar
 	call writechar
-	cmp al, 10
+	cmp al, 13
 	je Turn_To_Int
 	jmp Fix_Num_Val
 
@@ -133,18 +159,25 @@ Error:
 	call writechar
 	mov edx, offset oopsie
 	call writestring
-	mov esi, offset number
 	jmp Check_Sign
 
 
 	;Convert the array to a regular int
+
 Turn_To_Int:
 
-	
+	mov dx, cx
+	mov cx, 32
+	sub cx, dx
+	mov eax, 1
 
 Loop_Thru_Num_Arr:
 	
+	xor eax, eax
+	mov al, bl
+	jcxz Done
 	
+	mul ebx
 
 
 Done:
