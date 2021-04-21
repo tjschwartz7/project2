@@ -78,8 +78,8 @@ Check_Sign:
 
 Set_Negitive:
 
-	mov dl, 1
-	push dl
+	mov dx, 1
+	push dx
 
 Read_Loop:
 	
