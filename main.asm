@@ -28,15 +28,13 @@ divisionText db 'A/B=',0
 	MOV valueA, EAX
 	call readnum
 	MOV valueB, EAX
-	
-	;do conversion things here where valueB = num2 and EAX = num1 = valueA
-	
 	MOV EAX, valueA
 
 	LEA edx, additionText
 	call writestring
 	ADD EAX, valueB
 
+	;this number in eax needs to be converted to decimal and then also the output radix (to be displayed)
 	LEA edx, subtractionText
 	call writestring
 	SUB EAX, valueB
@@ -45,9 +43,12 @@ divisionText db 'A/B=',0
 	call writestring
 	MUL valueB
 
+	cmp eax, 0
+	JE skip_div
 	LEA edx, divisionText
 	call writestring
 	DIV valueB
+	skip_div:
 
 
 	endOfProgram:
@@ -86,7 +87,14 @@ Start_Over:
 	call readchar
 	call writechar
 	xor ebx, ebx
+	
 	mov bl, al
+	cwde
+	MOV eax, ebx  ;THIS ENSURES THAT BL HOLDS THE CORRECT NUMBER (IT DIDNT BEFORE THIS)
+	mov bl, al
+	call writedec
+	
+
 
 
 	cmp bl, 57
@@ -122,13 +130,13 @@ Check_Sign:
 	call readchar
 	call writechar
 	cmp al, 45
-	je Set_Negitive
+	je Set_Negative
 	cmp al, 10
 	jle Turned_To_Num
 	jmp Fix_Num_Val
 	xor eax, eax
 
-Set_Negitive:
+Set_Negative:
 
 	mov dx, 1
 	push dx
@@ -192,18 +200,26 @@ Error:
 
 Turn_To_Int:
 
+
 	mov dx, cx
 	mov cx, 32
-	sub cx, dx
+	sub cx, dx 
 	mov eax, 1
+	xor edx, edx
 
 Loop_Thru_Num_Arr:
 	
-	xor eax, eax
-	mov al, bl
+	push eax
+	push ebx
+	mov bl, [esi]
+	mul bl
+	dec esi
+	ADD edx, eax
+	pop ebx
+	pop eax
 	jcxz Done
-	
 	mul ebx
+	loop Loop_Thru_Num_Arr
 
 
 Done:
