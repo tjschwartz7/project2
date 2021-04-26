@@ -1,0 +1,360 @@
+; Project2.asm - This program inputs two values, and allows the user to perform arithmetic operations between them.
+;The input and output radices can be set to be different.
+
+.386
+.model flat,stdcall
+.stack 4096
+ExitProcess proto,dwExitCode:dword
+
+Include irvine32.inc
+
+.data
+valueA DD ?
+valueB DD ?
+input1 DB "Please enter an input radix: (Allowed Inputs: (0-9)(a-z)(A-Z) for 0d-62d)",0ah,0dh,0
+input2 DB "Please the number A:",0ah,0dh,0
+input3 DB "Please the number B:",0ah,0dh,0
+inputRadix DB ?
+outputRadix DB ?
+additionText db 'A+B=',0ah,0dh,0
+subtractionText db 'A-B=',0ah,0dh,0
+multiplicationText db 'A*B=',0ah,0dh,0
+divisionText db 'A/B=',0ah,0dh,0
+temp dw ?
+new_line db " ",0ah,0dh,0
+
+.code
+	main proc
+	xor ebx, ebx
+	xor edx, edx
+	call readnum
+	MOV valueA, EDX
+	
+
+	
+	LEA edx, new_line
+	call writestring
+	call writedec
+	LEA edx, new_line
+	call writestring
+
+	MOV eax, ebx
+
+	call readnum
+	MOV valueB, EDX
+	
+
+	LEA edx, new_line
+	call writestring
+	call writedec
+	LEA edx, new_line
+	call writestring
+
+	MOV eax, ebx
+	
+
+	mov ax, 154h ;Decimal number
+	lea esi, valueA
+	Until_zero:
+		
+		mov bx, 10h ;This is the output radix thats being converted to
+		cmp ax, 0
+		je Is_zero ;jumps out of the loop when ax is 0
+		xor dx,dx
+		div bx
+		push ax ;saves contents of ax onto stack for later use
+		mov cx, dx
+		mov al, 30h
+		First_base: ;Increments from 0 to 9
+			
+			cmp cl, 0
+			je Found_base
+			cmp al, 39h
+			je Increase ;If cl still isn't equal to zero increases to letters ascii
+			dec cl
+			inc al
+			jmp First_base
+		
+		Increase:  ;Makes ascii increment jump to lowercase letters (from numbers 0-9)
+			
+			mov al, 61h
+			dec cl
+			jmp First_base
+		
+		Found_base: ;When cl equals 0 then it is added to the string
+			
+			mov [esi], al
+			inc esi
+			pop ax
+			jmp Until_zero
+	
+	Is_zero: ;When value is now complete and at zero
+		
+		call Switch ;The string is in the reverse order, so this part switches it to the correct order
+		lea edx, valueA
+		call writestring
+
+	LEA edx, additionText
+	call writestring
+	ADD EAX, valueB
+
+	;this number in eax needs to be converted to decimal and then also the output radix (to be displayed)
+	LEA edx, subtractionText
+	call writestring
+	SUB EAX, valueB
+
+	LEA edx, multiplicationText
+	call writestring
+	MUL valueB
+
+	cmp eax, 0
+	JE skip_div
+	LEA edx, divisionText
+	call writestring
+	DIV valueB
+	skip_div:
+
+	endOfProgram:
+
+	
+	INVOKE ExitProcess, 0
+
+main endp
+
+;----------------------------------------------------------------------------------------------------------------------------------------------
+;ReadNum
+;Receives: 
+;Reads a number in any radix and converts the number into an int and returns it to EAX
+;----------------------------------------------------------------------------------------------------------------------------------------------
+
+ReadNum PROC
+
+.data
+
+	number db 33 dup(0);
+
+	askRadix db 'Input Radix: ', 0
+	newLine db 13,10,0
+	askNum db 'Input number, press enter once done', 13,10,0
+	oopsie db ' is larger than radix so that number doesnt make sense its like saying g11 hex, try again but be better', 13,10,0
+
+.code
+
+	
+
+Start_Over:
+
+	;Get input for radix and number
+	mov edx, offset askRadix
+	call writestring
+	call readchar
+	call writechar
+	xor ebx, ebx
+	
+	mov bl, al
+	cwde
+	MOV eax, ebx  ;THIS ENSURES THAT BL HOLDS THE CORRECT NUMBER (IT DIDNT BEFORE THIS)
+	mov bl, al
+	
+	
+
+
+
+	cmp bl, 57
+	jg Radix_Letter
+	cmp bl, 48
+	jl Start_Over
+	sub bl, '0'
+	jmp Ready_Read
+Radix_Letter:
+	cmp bl, 90
+	jg Radix_Lowercase
+	cmp bl, 65
+	jl Start_Over
+	sub bl, 29
+	jmp Ready_Read
+Radix_Lowercase:
+	cmp bl, 122
+	jg Error
+	cmp bl, 97
+	jl Error
+	sub bl, 87
+
+Ready_Read:
+
+	mov edx, offset newLine
+	call writestring
+	mov edx, offset askNum
+	call writestring
+	
+
+Check_Sign:
+
+	mov ecx, 32
+	mov esi, offset number
+	call readchar
+	call writechar
+	cmp al, 45
+	je Set_Negative
+	cmp al, 10
+	jle Turned_To_Num
+	jmp Fix_Num_Val
+	xor eax, eax
+
+Set_Negative:
+
+	mov edx, 1
+	push edx
+
+Read_Loop:
+	
+	call readchar
+	call writechar
+	cmp al, 13
+	je Turn_To_Int
+	jmp Fix_Num_Val
+
+Turned_To_Num:
+
+	cmp al, bl
+	jge Error
+	mov [esi], al
+	inc esi
+	jcxz Turn_To_Int
+	dec cx
+	jmp Read_Loop
+
+Fix_Num_Val:
+
+		cmp al, 57
+		jg Letter
+		cmp al, 48
+		jl Error
+		sub al, '0'
+		jmp Turned_To_Num
+
+	Letter:
+
+		cmp al, 90
+		jg Lowercase
+		cmp al, 65
+		jl Error
+		sub al, 29
+		jmp Turned_To_Num
+
+	Lowercase:
+
+		cmp al, 122
+		jg Error
+		cmp al, 97
+		jl Error
+		sub al, 87
+		jmp Turned_To_Num
+
+Error:
+
+	mov edx, offset newLine
+	call writestring
+	call writechar
+	mov edx, offset oopsie
+	call writestring
+	jmp Check_Sign
+
+
+	;Convert the array to a regular int
+
+Turn_To_Int:
+
+
+	mov dx, cx
+	mov cx, 32
+	sub cx, dx 
+	mov eax, 1
+	xor edx, edx
+
+Loop_Thru_Num_Arr:
+	
+	push eax
+	push ebx
+	mov bl, [esi]
+	mul bl
+	dec esi
+	ADD edx, eax
+	pop ebx
+	pop eax
+	jcxz Done
+	mul ebx
+	loop Loop_Thru_Num_Arr
+
+
+Done:
+
+
+	ret
+
+ReadNum ENDP
+
+Find_length:
+		
+		lea ebx, valueA
+		mov al, 0
+		mov ecx, 0
+
+		Find_string_length:
+			
+			cmp [ebx], al
+			je Length_found
+			inc ecx
+			inc ebx
+			jmp Find_string_length
+		
+		Length_found:	
+	ret
+
+	Switch:
+		
+		call Find_length
+		lea esi, valueA
+		lea edi, temp
+		sub ecx, 1
+		add esi, ecx
+		
+		Switching:
+			
+			mov al, [esi]
+			mov [edi], al
+			cmp ecx, 0
+			je Switch_done
+			dec esi
+			inc edi
+			dec ecx
+			jmp Switching
+		
+		Switch_done:
+			
+			call Copy_string
+	ret
+
+	Copy_string:
+	lea esi, temp
+	lea edi, valueA
+	mov ah, 0
+	
+	Copy:
+		
+		mov al, [esi]
+		mov [edi], al
+		inc esi
+		inc edi
+		cmp [esi], ah
+		je Copy_done
+		jmp Copy
+	
+	Copy_done:
+	ret
+	
+
+	
+	
+
+end main
