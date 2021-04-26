@@ -28,7 +28,7 @@ new_line db " ",0ah,0dh,0
 	xor ebx, ebx
 	xor edx, edx
 	call readnum
-	MOV valueA, EDX
+	MOV valueA, EAX
 	
 
 	
@@ -41,7 +41,7 @@ new_line db " ",0ah,0dh,0
 	MOV eax, ebx
 
 	call readnum
-	MOV valueB, EDX
+	MOV valueB, EAX
 	
 
 	LEA edx, new_line
