@@ -50,8 +50,6 @@ ReadNum PROC
 
 .code
 
-	pushad
-
 Start_Over:
 
 	;Get input for radix and number
@@ -84,6 +82,8 @@ Radix_Lowercase:
 
 Ready_Read:
 
+	cmp bl, 2
+	jl Start_Over
 	mov edx, offset newLine
 	call writestring
 	mov edx, offset askNum
@@ -97,6 +97,8 @@ Check_Sign:
 	call writechar
 	cmp al, 45
 	je Set_Negitive
+	mov dx, 0
+	push dx
 	cmp al, 10
 	jle Turned_To_Num
 	jmp Fix_Num_Val
@@ -166,23 +168,43 @@ Error:
 
 Turn_To_Int:
 
+	mov al, 0
+	mov [esi], al
+	dec esi
 	mov dx, cx
 	mov cx, 32
 	sub cx, dx
 	mov eax, 1
+	xor edx, edx
 
 Loop_Thru_Num_Arr:
 	
-	xor eax, eax
-	mov al, bl
+	push eax
+	push ebx
+	mov bl, [esi]
+	mul bl
+	dec esi
+	add edx, eax
+	pop ebx
+	pop eax
 	jcxz Done
-	
-	mul ebx
+	push edx
+	mul bl
+	pop edx
+	dec cx
+	jmp Loop_Thru_Num_Arr
 
 
 Done:
+	
+	mov eax, edx
+	pop dx
+	cmp dx, 0
+	je Positive
+	neg eax
 
-	popad
+Positive:
+	
 	ret
 
 ReadNum ENDP
