@@ -34,28 +34,19 @@ string_lenB dw ?
 	XOR ecx, ecx
 	call readnum
 	MOV valueA, AX
-	DIV bx
 	MOV inputRadixA, bx
-	division_loop1:
-	inc cx
-	DIV bx
-	cmp ax, 1
-	jle division_done1
-	jmp division_loop1
-	division_done1:
+	call find_length
+	INC cx     ;add 1 to cx so it holds the number of bits
 	MOV string_lenA, cx
+	MOV ax, cx
+	call writedec
+
 	
 	call readnum
 	MOV valueB, AX
-	DIV bx
 	MOV inputRadixB, bx
-	division_loop2:
-	inc cx
-	DIV bx
-	cmp ax, 1
-	jle division_done2
-	jmp division_loop2
-	division_done2:
+	call find_length
+	INC cx 
 	MOV string_lenB, cx
 	MOV ax, cx
 	call writedec
@@ -316,20 +307,14 @@ ReadNum ENDP
 
 Find_length:
 		
-		lea ebx, valueA
-		mov al, 0
-		mov ecx, 0
-
-		Find_string_length:
-			
-			cmp [ebx], al
-			je Length_Found
-			inc ecx
-			inc ebx
-			jmp Find_string_length
-		
-		Length_found:	
-		
+	division_loop1:  ;divides repeatedly by the radix and counts how many times it does it, using the counter as the number of bits the number will need
+	inc cx
+	DIV bx
+	;call writedec
+	cmp ax, 1
+	jle division_done1
+	jmp division_loop1
+	division_done1:		
 	ret
 
 	Switch:
