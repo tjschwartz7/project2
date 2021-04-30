@@ -79,47 +79,13 @@ string_lenB dw ?
 	MOV dx, 0
 	MOV [esi], dx
 	
+	call makeAscii
 
-	Until_zero:
-		
-		
-		cmp ax, 0
-		je Is_zero ;jumps out of the loop when ax is 0
-		xor dx,dx
-		div bx
-		push ax ;saves contents of ax onto stack for later use
-		mov cx, dx
-		mov al, 30h
-		First_base: ;Increments from 0 to 9
-			
-			cmp cl, 0
-			je Found_base
-			cmp al, 39h
-			je Increase ;If cl still isn't equal to zero increases to letters ascii
-			dec cl
-			inc al
-			jmp First_base
-		
-		Increase:  ;Makes ascii increment jump to lowercase letters (from numbers 0-9)
-			
-			mov al, 61h
-			dec cl
-			jmp First_base
-		
-		Found_base: ;When cl equals 0 then it is added to the string
-			
-			mov [esi], al
-			inc esi
-			pop ax
-			jmp Until_zero
-	
-	Is_zero: ;When value is now complete and at zero
-	    XOR ecx, ecx
+		XOR ecx, ecx
 		MOV cx, string_lenA
 		call Switch ;The string is in the reverse order, so this part switches it to the correct order
 		lea edx, valueA
 		call writestring
-
 
 	LEA edx, additionText
 	call writestring
@@ -387,5 +353,42 @@ Find_length:
 	
 	Copy_done:
 	ret
+
+		makeAscii:
+		Until_zero:
+		
+		
+		cmp ax, 0
+		je Is_zero ;jumps out of the loop when ax is 0
+		xor dx,dx
+		div bx
+		push ax ;saves contents of ax onto stack for later use
+		mov cx, dx
+		mov al, 30h
+		First_base: ;Increments from 0 to 9
+			
+			cmp cl, 0
+			je Found_base
+			cmp al, 39h
+			je Increase ;If cl still isn't equal to zero increases to letters ascii
+			dec cl
+			inc al
+			jmp First_base
+		
+		Increase:  ;Makes ascii increment jump to lowercase letters (from numbers 0-9)
+			
+			mov al, 61h
+			dec cl
+			jmp First_base
+		
+		Found_base: ;When cl equals 0 then it is added to the string
+			
+			mov [esi], al
+			inc esi
+			pop ax
+			jmp Until_zero
+	
+	Is_zero: ;When value is now complete and at zero
+		ret
 
 end main
