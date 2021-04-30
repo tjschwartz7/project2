@@ -17,10 +17,14 @@ input3 DB "Please the number B:",0ah,0dh,0
 inputRadixA DW ?
 inputRadixB DW ?
 outputRadix DB ?
-additionText db 'A+B=',0ah,0dh,0
-subtractionText db 'A-B=',0ah,0dh,0
-multiplicationText db 'A*B=',0ah,0dh,0
-divisionText db 'A/B=',0ah,0dh,0
+additionText db 0ah,0dh,'A+B=',0
+subtractionText db 0ah,0dh,'A-B=',0
+multiplicationText db 0ah,0dh,'A*B=',0
+divisionText db 0ah,0dh,'A/B=',0
+addValue dw ?
+subValue dw ?
+mulValue dw ?
+divValue dw ?
 temp dw ?
 new_line db " ",0ah,0dh,0
 string_lenA dw ?
@@ -38,8 +42,7 @@ string_lenB dw ?
 	call find_length
 	INC cx     ;add 1 to cx so it holds the number of bits
 	MOV string_lenA, cx
-	MOV ax, cx
-	call writedec
+
 
 	
 	call readnum
@@ -48,14 +51,33 @@ string_lenB dw ?
 	call find_length
 	INC cx 
 	MOV string_lenB, cx
-	MOV ax, cx
-	call writedec
+	MOV ax, valueA
+	ADD AX, valueB
+	MOV addValue, ax
+	MOV ax, valueA
+	SUB ax, valueB
+	MOV subValue, ax
+
+	MOV ax, valueA
+	cmp eax, 0
+	JE skip_div
+	DIV valueB
+	skip_div:
+	MOV divValue, ax
+	MOV ax, valueA
+	MUL valueB
+	MOV mulValue, ax
+
+
+
 	LEA edx,new_line
 	call writestring
 	MOV ax, valueA
 
 
 	lea esi, valueA
+	MOV dx, 0
+	MOV [esi], dx
 	
 
 	Until_zero:
@@ -99,26 +121,29 @@ string_lenB dw ?
 		call writestring
 
 
-
 	LEA edx, additionText
 	call writestring
-	ADD AX, valueB
+	MOV ax, addValue
+	call writedec
 
+	xor eax, eax
 	;this number in eax needs to be converted to decimal and then also the output radix (to be displayed)
 	LEA edx, subtractionText
 	call writestring
-	SUB AX, valueB
+	MOV ax, subValue
+	call writedec
 
 	LEA edx, multiplicationText
 	call writestring
-	MUL valueB
+	MOV ax, mulValue
+	call writedec
 
-	cmp eax, 0
-	JE skip_div
+
 	LEA edx, divisionText
 	call writestring
-	DIV valueB
-	skip_div:
+	MOV ax, divValue
+	call writedec
+	
 	endOfProgram:
 
 	
@@ -324,6 +349,10 @@ Find_length:
 		lea edi, temp
 		sub ecx, 1
 		add esi, ecx
+		ADD esi, 1
+		MOV dx, 0
+		MOV [esi], dx
+		DEC esi
 		
 		Switching:
 			
