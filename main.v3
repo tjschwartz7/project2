@@ -14,6 +14,7 @@ valueB DW ?
 input1 DB "Please enter an input radix: (Allowed Inputs: (0-9)(a-z)(A-Z) for 0d-62d)",0ah,0dh,0
 input2 DB "Please the number A:",0ah,0dh,0
 input3 DB "Please the number B:",0ah,0dh,0
+input4 DB "Please enter the radix you would like your output in: "0ah,0dh,0
 inputRadixA DW ?
 inputRadixB DW ?
 outputRadix DB ?
@@ -42,7 +43,7 @@ string_lenB dw ?
 	call find_length
 	INC cx     ;add 1 to cx so it holds the number of bits
 	MOV string_lenA, cx
-
+	
 
 	
 	call readnum
@@ -58,10 +59,14 @@ string_lenB dw ?
 	SUB ax, valueB
 	MOV subValue, ax
 
+	XOR eax, eax
+	XOR edx, edx
 	MOV ax, valueA
-	cmp eax, 0
+	call writedec
+	cmp ax, 0
 	JE skip_div
 	DIV valueB
+	call writedec
 	skip_div:
 	MOV divValue, ax
 	MOV ax, valueA
@@ -81,34 +86,34 @@ string_lenB dw ?
 	
 	call makeAscii
 
-		XOR ecx, ecx
-		MOV cx, string_lenA
-		call Switch ;The string is in the reverse order, so this part switches it to the correct order
-		lea edx, valueA
-		call writestring
+	XOR ecx, ecx
+	MOV cx, string_lenA
+	call Switch ;The string is in the reverse order, so this part switches it to the correct order
+	lea edx, valueA
+	call writestring
 
 	LEA edx, additionText
 	call writestring
 	MOV ax, addValue
-	call writedec
+	call convertDec
 
 	xor eax, eax
 	;this number in eax needs to be converted to decimal and then also the output radix (to be displayed)
 	LEA edx, subtractionText
 	call writestring
 	MOV ax, subValue
-	call writedec
+	call convertDec
 
 	LEA edx, multiplicationText
 	call writestring
 	MOV ax, mulValue
-	call writedec
+	call convertDec
 
 
 	LEA edx, divisionText
 	call writestring
 	MOV ax, divValue
-	call writedec
+	call convertDec
 	
 	endOfProgram:
 
@@ -390,5 +395,29 @@ Find_length:
 	
 	Is_zero: ;When value is now complete and at zero
 		ret
+
+		convertDec PROC
+
+		.data
+		variableThatHoldsAx dw ?
+
+		.code
+		
+		MOV variableThatHoldsAx, ax
+		LEA esi, variableThatHoldsAx
+		loop_cd:
+		MOV dx, 48d
+		MOV al, [esi]
+		ADD [esi], dx
+
+		MOV al, [esi]
+		call writechar
+		INC esi
+		MOV dx, 0
+		CMP [esi], dx
+		JNE loop_cd
+
+		ret
+		convertDec endp
 
 end main
