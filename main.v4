@@ -104,9 +104,10 @@ PrintValues:
 	call convertDec
 	lea edx, output1
 	call writestring
-
-	call printNumRadix
+	MOV eax, addValue
+	call printNumofAnyRadix
 	lea edx, output2
+	call writestring
     MOV eax, ebx
 	call writechar
 
@@ -114,17 +115,17 @@ PrintValues:
 	mov edx, offset subText
 	call writeString
 	mov eax, subvalue
-	call printNumRadix
+    call printNumofAnyRadix
 
 	mov edx, offset mulText
 	call writeString
 	mov eax, mulvalue
-	call printNumRadix
+    call printNumofAnyRadix
 
 	mov edx, offset divText
 	call writeString
 	mov eax, divvalue
-	call printNumRadix
+    call printNumofAnyRadix
 	mov al, 32
 	call writeChar
 	mov al, 82
@@ -132,7 +133,7 @@ PrintValues:
 	mov al, 32
 	call writeChar
 	mov eax, remvalue
-	call printNumRadix
+    call printNumofAnyRadix 
 
 
 	
@@ -144,7 +145,6 @@ main endp
 convertDec PROC
 
 	.data
-	variableThatHoldsAx dw ?
 	counter dw ?
 
 	.code
@@ -355,94 +355,69 @@ Positive:
 
 ReadNum ENDP
 
-;----------------------------------------------------------------------------------------------------------------------------------------------
-;PrintNumRadix
-;Receives:
-;EAX: Value to print
-;BL: Radix to print in
-;Converts an int into a string representing a number in any radix, then prints the number
-;----------------------------------------------------------------------------------------------------------------------------------------------
 
-PrintNumRadix PROC
 
-.data
-	numString db 33 dup(0);
-.code
+	printNumOfAnyRadix PROC
+	.data
+
+	.code
 	xor edx, edx
-	mov esi, offset numString
-	mov ecx, 32
 
-Div_Loop:
-
-	cmp eax, ebx
-	jg Do_The_Div
-	mov dx, ax
-	mov ax, 0
-	jmp Skip_The_Div
-
-Do_The_Div:
-
-	div bx
-
-Skip_The_Div:
-
-	cmp dx, 9
-	jg Letter_Print
-	add dx, 30h
-	jmp Add_To_Arr
-
-Letter_Print:
-
-	cmp dx, 36
-	jg Upper_Letter_Print
-	add dx, 87
-	jmp Add_To_Arr
-
-Upper_Letter_Print:
-
-	add dx, 29
-
-Add_To_Arr:
-
-	mov [esi], dl
-	dec cx
-	jcxz Done_With_Div_Loop
-	cmp ax, 0
-	je Done_With_Div_Loop
-	inc esi
-	jmp Div_Loop
-
-Done_With_Div_Loop:
-
-	mov bx, cx
-	mov cx, 32
-	sub cx, bx
-
-Print_Num:
-
-	jcxz Print_Done
-	mov al, [esi]
-	call writeChar
-	dec esi
-	jmp Print_Num
-
-Print_Done:
-
-	ret
-PrintNumRadix ENDP
-
-Find_length:
-	MOV ten, 10d
-	xor ecx, ecx
-	xor edx, edx
 	div_loop:
 	inc cx
-	div ten
+	DIV bx
+
+	push dx
 	xor edx, edx
-	cmp ax, 10d
-	jg div_loop
+	cmp ax, bx
+	jge div_loop
+	
+
+	MOV counter, cx
+	XOR cx, cx
+
+
+	output_loop:
 	inc cx
+
+
+	CMP ax, 9d
+	JLE number_output
+	CMP ax, 10d
+	JGE letter_output
+	jmp done
+
+
+	number_output:
+	ADD ax, 48d
+	call writechar
+	jmp done
+
+	letter_output:
+	CMP ax,36d
+	JLE lowercase_output
+	CMP  ax, 62d
+	JLE uppercase_output
+
+	lowercase_output:
+	ADD ax, 87d
+	call writechar
+	jmp done
+	uppercase_output:
+	add ax, 28d
+	call writechar
+	
+
+
+	done:
+	pop ax
+	cmp cx, counter
+	JL output_loop
+
 	ret
+	printNumOfAnyRadix ENDP
+
+
 
 
 end main
