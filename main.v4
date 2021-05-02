@@ -399,6 +399,14 @@ ReadNum ENDP
 	.code
 	xor edx, edx
 	XOR ecx, ecx
+	
+	cmp eax, 10000000000000000000000000000000b
+	jl Print_Pos
+	neg eax
+	push eax
+	mov al, 2dh
+	call writeChar
+	pop eax
 
 	div_loop:
 	inc cx
