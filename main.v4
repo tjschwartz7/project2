@@ -24,6 +24,8 @@ mulText db 13,10,'A * B = ' ,0
 divText db 13,10,'A / B = ' ,0
 output1 db ' and ',0
 output2 db 'in radix ',0
+new_line db 10,13," ",0
+
 
 .code
 	main proc
@@ -55,16 +57,20 @@ output2 db 'in radix ',0
 Not_Valid:
 
 	xor ebx, ebx
+	xor eax, eax
 	mov edx, offset askRadixOut
 	call writeString
 	call readChar
 	call writeChar
+	MOV bl ,al
+	cwde
+	MOV eax, ebx
 
 	cmp al, 30h
 	jl Not_Valid
 	cmp al, 39h
 	jg LetterMain
-	sub al, 30h
+	sub al, 48d
 	jmp PrintValues
 
 LetterMain:
@@ -96,6 +102,8 @@ PrintValues:
 	call writestring
 	call printNumRadix
 	lea edx, output2
+    MOV eax, ebx
+	call writechar
 
 
 	mov edx, offset subText
@@ -132,13 +140,20 @@ convertDec PROC
 
 		.data
 		variableThatHoldsAx dw ?
+		counter dw ?
 
 		.code
 		
 		MOV variableThatHoldsAx, ax
 		xor eax, eax
 		LEA esi, variableThatHoldsAx
+		MOV eax, valueA
+		call find_length
+		xor eax, eax
+		MOV counter, cx
+		XOR cx, cx
 		loop_cd:
+		inc cx
 		MOV dx, 48d
 		ADD [esi], dx
 
@@ -147,19 +162,11 @@ convertDec PROC
 		INC esi
 		
 		MOV edx, valueA
-		call find_length
-		CMP [esi], cx
+		CMP cx, counter
 		JNE loop_cd
 
 		ret
 		convertDec endp
-
-
-
-
-
-
-
 
 
 ;----------------------------------------------------------------------------------------------------------------------------------------------
@@ -417,10 +424,13 @@ Print_Done:
 PrintNumRadix ENDP
 
 Find_length:
-		
+	XOR ecx, ecx
+	xor edx, edx
 	division_loop1:  ;divides repeatedly by the radix and counts how many times it does it, using the counter as the number of bits the number will need
 	inc cx
+
 	DIV bx
+	SUB ax, dx
 	cmp ax, 1
 	jle division_done1
 	jmp division_loop1
@@ -428,4 +438,6 @@ Find_length:
 	ret
 
 end main
+
+
 
