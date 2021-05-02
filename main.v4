@@ -22,9 +22,12 @@ addText db 0ah,0dh,'A + B = ',0
 subText db 13,10,'A - B = ' ,0
 mulText db 13,10,'A * B = ' ,0
 divText db 13,10,'A / B = ' ,0
+remText db ' R ',0
 output1 db ' and ',0
-output2 db 'in radix ',0
+output2 db ' in radix ',0
 new_line db 10,13," ",0
+
+outputRadixChar db ?
 
 ten dw ?
 
@@ -52,8 +55,9 @@ ten dw ?
 	mul ebx
 	mov mulvalue, eax
 
-	mov eax, valueB
-	mov ebx, valueA
+	XOR edx, edx
+	mov eax, valueA
+	mov ebx, valueB
 	div ebx
 	mov divvalue, eax
 	mov remvalue, edx
@@ -66,6 +70,7 @@ Not_Valid:
 	call writeString
 	call readChar
 	call writeChar
+	MOV outputRadixChar, al
 	MOV bl ,al
 	cwde
 	MOV eax, ebx
@@ -108,32 +113,62 @@ PrintValues:
 	call printNumofAnyRadix
 	lea edx, output2
 	call writestring
-    MOV eax, ebx
+    MOV al, outputRadixChar
 	call writechar
+
 
 
 	mov edx, offset subText
 	call writeString
 	mov eax, subvalue
-    call printNumofAnyRadix
+	call convertDec
+	lea edx, output1
+	call writestring
+	MOV eax, subValue
+	call printNumofAnyRadix
+	lea edx, output2
+	call writestring
+	MOV al, outputRadixChar
+	call writechar
 
 	mov edx, offset mulText
 	call writeString
 	mov eax, mulvalue
-    call printNumofAnyRadix
+	call convertDec
+	lea edx, output1
+	call writestring
+	MOV eax, mulValue
+	call printNumofAnyRadix
+	lea edx, output2
+	call writestring
+    MOV al, outputRadixChar
+	call writechar
 
 	mov edx, offset divText
 	call writeString
 	mov eax, divvalue
-    call printNumofAnyRadix
-	mov al, 32
-	call writeChar
-	mov al, 82
-	call writeChar
-	mov al, 32
-	call writeChar
+	call convertDec
+	lea edx, output1
+	call writestring
+	MOV eax, divValue
+	call printNumofAnyRadix
+	lea edx, output2
+	call writestring
+    MOV al, outputRadixChar
+	call writechar
+
+	mov edx, offset remText
+	call writeString
 	mov eax, remvalue
-    call printNumofAnyRadix 
+	call convertDec
+	lea edx, output1
+	call writestring
+	MOV eax, remValue
+	call printNumofAnyRadix
+	lea edx, output2
+	call writestring
+    MOV al, outputRadixChar
+	call writechar
 
 
 	
@@ -148,6 +183,7 @@ convertDec PROC
 	counter dw ?
 
 	.code
+	XOR ecx, ecx
 	xor edx, edx
 	MOV ten, 10d
 	div_loop:
@@ -362,6 +398,7 @@ ReadNum ENDP
 
 	.code
 	xor edx, edx
+	XOR ecx, ecx
 
 	div_loop:
 	inc cx
@@ -375,7 +412,6 @@ ReadNum ENDP
 
 	MOV counter, cx
 	XOR cx, cx
-
 
 	output_loop:
 	inc cx
@@ -410,9 +446,12 @@ ReadNum ENDP
 
 
 	done:
-	pop ax
 	cmp cx, counter
-	JL output_loop
+	JG done_with_output
+	pop ax
+
+	Jmp output_loop
+	done_with_output:
 
 	ret
 	printNumOfAnyRadix ENDP
@@ -421,4 +460,6 @@ ReadNum ENDP
 
 
 end main
+
+
 
