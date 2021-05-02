@@ -26,14 +26,18 @@ output1 db ' and ',0
 output2 db 'in radix ',0
 new_line db 10,13," ",0
 
+ten dw ?
+
 
 .code
 	main proc
 
 	call readnum
 	mov valueA, eax
+
 	call readnum
 	mov valueB, eax
+
 
 	add eax, valueA
 	mov addvalue, eax
@@ -100,6 +104,7 @@ PrintValues:
 	call convertDec
 	lea edx, output1
 	call writestring
+
 	call printNumRadix
 	lea edx, output2
     MOV eax, ebx
@@ -138,35 +143,38 @@ main endp
 
 convertDec PROC
 
-		.data
-		variableThatHoldsAx dw ?
-		counter dw ?
+	.data
+	variableThatHoldsAx dw ?
+	counter dw ?
 
-		.code
+	.code
+	xor edx, edx
+	MOV ten, 10d
+	div_loop:
+	inc cx
+	DIV ten
+	push dx
+	xor edx, edx
+	cmp ax, 10
+	jge div_loop
+	ADD ax, 30h
+	call writechar
+	MOV counter, cx
+	XOR cx, cx
+	output_loop:
+	pop ax
+    ADD AX, 30h
+	call writechar
+	inc cx
+	CMP cx, counter
+	JNE output_loop
+
+
+
 		
-		MOV variableThatHoldsAx, ax
-		xor eax, eax
-		LEA esi, variableThatHoldsAx
-		MOV eax, valueA
-		call find_length
-		xor eax, eax
-		MOV counter, cx
-		XOR cx, cx
-		loop_cd:
-		inc cx
-		MOV dx, 48d
-		ADD [esi], dx
 
-		MOV al, [esi]
-		call writechar
-		INC esi
-		
-		MOV edx, valueA
-		CMP cx, counter
-		JNE loop_cd
-
-		ret
-		convertDec endp
+	ret
+	convertDec endp
 
 
 ;----------------------------------------------------------------------------------------------------------------------------------------------
@@ -360,7 +368,7 @@ PrintNumRadix PROC
 .data
 	numString db 33 dup(0);
 .code
-	
+	xor edx, edx
 	mov esi, offset numString
 	mov ecx, 32
 
@@ -424,20 +432,18 @@ Print_Done:
 PrintNumRadix ENDP
 
 Find_length:
-	XOR ecx, ecx
+	MOV ten, 10d
+	xor ecx, ecx
 	xor edx, edx
-	division_loop1:  ;divides repeatedly by the radix and counts how many times it does it, using the counter as the number of bits the number will need
+	div_loop:
 	inc cx
-
-	DIV bx
-	SUB ax, dx
-	cmp ax, 1
-	jle division_done1
-	jmp division_loop1
-	division_done1:		
+	div ten
+	xor edx, edx
+	cmp ax, 10d
+	jg div_loop
+	inc cx
 	ret
 
+
 end main
-
-
 
