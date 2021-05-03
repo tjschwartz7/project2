@@ -37,10 +37,13 @@ ten dw ?
 
 	call readnum
 	mov valueA, eax
+	mov edx, offset newLine
+	call writestring
 
 	call readnum
 	mov valueB, eax
-
+	mov edx, offset newLine
+	call writestring
 
 	add eax, valueA
 	mov addvalue, eax
@@ -58,7 +61,7 @@ ten dw ?
 	XOR edx, edx
 	mov eax, valueA
 	mov ebx, valueB
-	div ebx
+	idiv ebx
 	mov divvalue, eax
 	mov remvalue, edx
 
@@ -185,6 +188,16 @@ convertDec PROC
 	.code
 	XOR ecx, ecx
 	xor edx, edx
+
+	cmp eax, 0
+	jg Print_Pos_Dec
+	neg eax
+	push eax
+	mov al, 2dh
+	call writeChar
+	pop eax
+
+Print_Pos_Dec:
 	MOV ten, 10d
 	div_loop:
 	inc cx
@@ -399,14 +412,16 @@ ReadNum ENDP
 	.code
 	xor edx, edx
 	XOR ecx, ecx
-	
-	cmp eax, 10000000000000000000000000000000b
-	jl Print_Pos
+
+	cmp eax, 0
+	jg Print_Pos
 	neg eax
 	push eax
 	mov al, 2dh
 	call writeChar
 	pop eax
+
+Print_Pos:
 
 	div_loop:
 	inc cx
@@ -468,6 +483,5 @@ ReadNum ENDP
 
 
 end main
-
 
 
