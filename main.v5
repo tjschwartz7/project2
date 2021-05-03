@@ -16,6 +16,9 @@ subvalue dword ?
 mulvalue dword ?
 divvalue dword ?
 remvalue dword ?
+expvalue dword ?
+
+expMulValue dword ?
 
 askRadixOut db 'Enter the radix you would like to output in: ', 13,10,0
 addText db 0ah,0dh,'A + B = ',0
@@ -23,6 +26,7 @@ subText db 13,10,'A - B = ' ,0
 mulText db 13,10,'A * B = ' ,0
 divText db 13,10,'A / B = ' ,0
 remText db ' R ',0
+expText db 13,10,'A raised to the Abs(B): ',0
 output1 db ' and ',0
 output2 db ' in radix ',0
 new_line db 10,13," ",0
@@ -36,12 +40,18 @@ ten dw ?
 	main proc
 
 	call readnum
+	cmp eax, 42060D
+	JE END_PROGRAM
 	mov valueA, eax
 	mov edx, offset newLine
 	call writestring
 
 	call readnum
+	cmp eax, 42060D
+	JE END_PROGRAM
 	mov valueB, eax
+	CMP eax, 34d
+	JE END_PROGRAM
 	mov edx, offset newLine
 	call writestring
 
@@ -67,6 +77,23 @@ ten dw ?
 	mov divvalue, eax
 	mov remvalue, edx
 
+	MOV eax, valueA
+	MOV ebx, valueB
+	MOV expMulValue, eax
+	CMP ebx, 0
+	JG skip_negate
+	NEG ebx
+	skip_negate:
+	MOV ecx, 1
+	exponent_loop:
+	MUL expMulValue
+	INC ecx
+	CMP ecx, ebx
+	JL exponent_loop
+	MOV expValue, eax
+
+	;The code below converts the radix to a usable decimal value
+	;Written by jonathan
 Not_Valid:
 
 	xor ebx, ebx
@@ -107,7 +134,12 @@ LowerLetterMain:
 PrintValues:
 
 	mov bl, al
+	;end of segment
 	
+
+
+	;This code below outputs all of the arithmetic values
+	;Written by Trenton Schwartz
 	mov edx, offset addText
 	call writeString
 	mov eax, addvalue
@@ -176,12 +208,29 @@ PrintValues:
 	call writechar
 
 
+	mov edx, offset expText
+	call writeString
+	mov eax, expvalue
+	call convertDec
+	lea edx, output1
+	call writestring
+	MOV eax, expValue
+	call printNumofAnyRadix
+	lea edx, output2
+	call writestring
+    MOV al, outputRadixChar
+	call writechar
+	;end of segment
+
+
+	END_PROGRAM:
 	
 	INVOKE ExitProcess, 0
 
 main endp
 
-
+;The convertDec PROC converts the decimal value to a character output which is displayed on the command prompt
+;Written by Trenton Schwartz
 convertDec PROC
 
 	.data
@@ -232,6 +281,7 @@ Print_Pos_Dec:
 ;ReadNum
 ;Receives: 
 ;Reads a number in any radix and converts the number into an int and returns it to EAX
+;Readnum PROC below written by Jonathan
 ;----------------------------------------------------------------------------------------------------------------------------------------------
 
 ReadNum PROC
@@ -253,6 +303,10 @@ Start_Over:
 	mov edx, offset askRadix
 	call writestring
 	call readchar
+	CMP al, 88d
+	JE END_PROGRAM
+	CMP al, 120d
+	JE END_PROGRAM
 	call writechar
 	xor ebx, ebx
 	mov bl, al
@@ -402,12 +456,21 @@ Done:
 
 Positive:
 	
+
+	jmp skip
+	END_PROGRAM:
+	MOV EAX, 42060D
+	skip:
 	ret
 
 ReadNum ENDP
 
 
 
+;This proc takes a decimal input in eax, divides it by radix ebx, and pushes the remainder onto the stack. It does this repeatedly,
+;until the leftover number eax is less than radix ebx. Then, this value eax is written to command prompt. Next, the values on the stack are popped into eax,
+;and displayed to command prompt. The numbers are pushed onto a stack in order to be displayed backwards, which actually leaves them in their correct order.
+;PrintNumOfAnyRadix PROC written by Trenton Schwartz
 	printNumOfAnyRadix PROC
 	.data
 
@@ -477,7 +540,6 @@ Print_Pos:
 
 	Jmp output_loop
 	done_with_output:
-
 	ret
 	printNumOfAnyRadix ENDP
 
