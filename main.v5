@@ -1,0 +1,487 @@
+; Project2.asm - This program inputs two values, and allows the user to perform arithmetic operations between them.
+;The input and output radices can be set to be different.
+
+.386
+.model flat,stdcall
+.stack 4096
+ExitProcess proto,dwExitCode:dword
+
+Include irvine32.inc
+
+.data
+valueA dword ?
+valueB dword ?
+addValue dword ?
+subvalue dword ?
+mulvalue dword ?
+divvalue dword ?
+remvalue dword ?
+
+askRadixOut db 'Enter the radix you would like to output in: ', 13,10,0
+addText db 0ah,0dh,'A + B = ',0
+subText db 13,10,'A - B = ' ,0
+mulText db 13,10,'A * B = ' ,0
+divText db 13,10,'A / B = ' ,0
+remText db ' R ',0
+output1 db ' and ',0
+output2 db ' in radix ',0
+new_line db 10,13," ",0
+
+outputRadixChar db ?
+
+ten dw ?
+
+
+.code
+	main proc
+
+	call readnum
+	mov valueA, eax
+	mov edx, offset newLine
+	call writestring
+
+	call readnum
+	mov valueB, eax
+	mov edx, offset newLine
+	call writestring
+
+	add eax, valueA
+	mov addvalue, eax
+
+	mov eax, valueA
+	mov ebx, valueB
+
+	sub eax, ebx
+	mov subvalue, eax
+
+	mov eax, valueA
+	mul ebx
+	mov mulvalue, eax
+
+	XOR edx, edx
+	cdq
+	mov eax, valueA
+	cdq
+	mov ebx, valueB
+	idiv ebx
+	mov divvalue, eax
+	mov remvalue, edx
+
+Not_Valid:
+
+	xor ebx, ebx
+	xor eax, eax
+	mov edx, offset askRadixOut
+	call writeString
+	call readChar
+	call writeChar
+	MOV outputRadixChar, al
+	MOV bl ,al
+	cwde
+	MOV eax, ebx
+
+	cmp al, 30h
+	jl Not_Valid
+	cmp al, 39h
+	jg LetterMain
+	sub al, 48d
+	jmp PrintValues
+
+LetterMain:
+
+	cmp al, 41h
+	jl Not_Valid
+	cmp al, 5Ah
+	jg LowerLetterMain
+	sub al, 29
+	jmp PrintValues
+
+LowerLetterMain:
+
+	cmp al, 61h
+	jl Not_Valid
+	cmp al, 7ah
+	jg Not_Valid
+	sub al, 87
+
+PrintValues:
+
+	mov bl, al
+	
+	mov edx, offset addText
+	call writeString
+	mov eax, addvalue
+	call convertDec
+	lea edx, output1
+	call writestring
+	MOV eax, addValue
+	call printNumofAnyRadix
+	lea edx, output2
+	call writestring
+    MOV al, outputRadixChar
+	call writechar
+
+
+
+	mov edx, offset subText
+	call writeString
+	mov eax, subvalue
+	call convertDec
+	lea edx, output1
+	call writestring
+	MOV eax, subValue
+	call printNumofAnyRadix
+	lea edx, output2
+	call writestring
+	MOV al, outputRadixChar
+	call writechar
+
+	mov edx, offset mulText
+	call writeString
+	mov eax, mulvalue
+	call convertDec
+	lea edx, output1
+	call writestring
+	MOV eax, mulValue
+	call printNumofAnyRadix
+	lea edx, output2
+	call writestring
+    MOV al, outputRadixChar
+	call writechar
+
+	mov edx, offset divText
+	call writeString
+	mov eax, divvalue
+	call convertDec
+	lea edx, output1
+	call writestring
+	MOV eax, divValue
+	call printNumofAnyRadix
+	lea edx, output2
+	call writestring
+    MOV al, outputRadixChar
+	call writechar
+
+	mov edx, offset remText
+	call writeString
+	mov eax, remvalue
+	call convertDec
+	lea edx, output1
+	call writestring
+	MOV eax, remValue
+	call printNumofAnyRadix
+	lea edx, output2
+	call writestring
+    MOV al, outputRadixChar
+	call writechar
+
+
+	
+	INVOKE ExitProcess, 0
+
+main endp
+
+
+convertDec PROC
+
+	.data
+	counter dw ?
+
+	.code
+	XOR ecx, ecx
+	xor edx, edx
+
+	cmp eax, 0
+	jg Print_Pos_Dec
+	neg eax
+	push eax
+	mov al, 2dh
+	call writeChar
+	pop eax
+
+Print_Pos_Dec:
+	MOV ten, 10d
+	div_loop:
+	inc cx
+	DIV ten
+	push dx
+	xor edx, edx
+	cmp ax, 10
+	jge div_loop
+	ADD ax, 30h
+	call writechar
+	MOV counter, cx
+	XOR cx, cx
+	output_loop:
+	pop ax
+    ADD AX, 30h
+	call writechar
+	inc cx
+	CMP cx, counter
+	JNE output_loop
+
+
+
+		
+
+	ret
+	convertDec endp
+
+
+;----------------------------------------------------------------------------------------------------------------------------------------------
+;ReadNum
+;Receives: 
+;Reads a number in any radix and converts the number into an int and returns it to EAX
+;----------------------------------------------------------------------------------------------------------------------------------------------
+
+ReadNum PROC
+
+.data
+
+	number db 33 dup(0);
+
+	askRadix db 'Input Radix (2-9, a-z, A-Z for 2-62): ', 0
+	newLine db 13,10,0
+	askNum db 'Input number, press enter once done', 13,10,0
+	oopsie db ' is larger than radix so that number doesnt make sense its like saying g11 hex, try again but be better', 13,10,0
+
+.code
+
+Start_Over:
+
+	;Get input for radix and number
+	mov edx, offset askRadix
+	call writestring
+	call readchar
+	call writechar
+	xor ebx, ebx
+	mov bl, al
+
+
+	cmp bl, 57
+	jg Radix_Letter
+	cmp bl, 48
+	jl Start_Over
+	sub bl, '0'
+	jmp Ready_Read
+Radix_Letter:
+	cmp bl, 90
+	jg Radix_Lowercase
+	cmp bl, 65
+	jl Start_Over
+	sub bl, 29
+Radix_Lowercase:
+	cmp bl, 122
+	jg Error
+	cmp bl, 97
+	jl Error
+	sub bl, 87
+
+Ready_Read:
+
+	cmp bl, 2
+	jl Start_Over
+	mov edx, offset newLine
+	call writestring
+	mov edx, offset askNum
+	call writestring
+
+Check_Sign:
+
+	mov ecx, 32
+	mov esi, offset number
+	call readchar
+	call writechar
+	cmp al, 45
+	je Set_Negitive
+	mov dx, 0
+	push dx
+	cmp al, 10
+	jle Turned_To_Num
+	jmp Fix_Num_Val
+	xor eax, eax
+
+Set_Negitive:
+
+	mov dx, 1
+	push dx
+
+Read_Loop:
+	
+	call readchar
+	call writechar
+	cmp al, 13
+	je Turn_To_Int
+	jmp Fix_Num_Val
+
+Turned_To_Num:
+
+	cmp al, bl
+	jge Error
+	mov [esi], al
+	inc esi
+	jcxz Turn_To_Int
+	dec cx
+	jmp Read_Loop
+
+Fix_Num_Val:
+
+		cmp al, 57
+		jg Letter
+		cmp al, 48
+		jl Error
+		sub al, '0'
+		jmp Turned_To_Num
+
+	Letter:
+
+		cmp al, 90
+		jg Lowercase
+		cmp al, 65
+		jl Error
+		sub al, 29
+		jmp Turned_To_Num
+
+	Lowercase:
+
+		cmp al, 122
+		jg Error
+		cmp al, 97
+		jl Error
+		sub al, 87
+		jmp Turned_To_Num
+
+Error:
+
+	mov edx, offset newLine
+	call writestring
+	call writechar
+	mov edx, offset oopsie
+	call writestring
+	jmp Check_Sign
+
+
+	;Convert the array to a regular int
+
+Turn_To_Int:
+
+	mov al, 0
+	mov [esi], al
+	dec esi
+	mov dx, cx
+	mov cx, 32
+	sub cx, dx
+	mov eax, 1
+	xor edx, edx
+
+Loop_Thru_Num_Arr:
+	
+	push eax
+	push ebx
+	mov bl, [esi]
+	mul bl
+	dec esi
+	add edx, eax
+	pop ebx
+	pop eax
+	jcxz Done
+	push edx
+	mul bl
+	pop edx
+	dec cx
+	jmp Loop_Thru_Num_Arr
+
+
+Done:
+	
+	mov eax, edx
+	pop dx
+	cmp dx, 0
+	je Positive
+	neg eax
+
+Positive:
+	
+	ret
+
+ReadNum ENDP
+
+
+
+	printNumOfAnyRadix PROC
+	.data
+
+	.code
+	xor edx, edx
+	XOR ecx, ecx
+
+	cmp eax, 0
+	jg Print_Pos
+	neg eax
+	push eax
+	mov al, 2dh
+	call writeChar
+	pop eax
+
+Print_Pos:
+
+	div_loop:
+	inc cx
+	DIV bx
+
+	push dx
+	xor edx, edx
+	cmp ax, bx
+	jge div_loop
+	
+
+	MOV counter, cx
+	XOR cx, cx
+
+	output_loop:
+	inc cx
+
+
+	CMP ax, 9d
+	JLE number_output
+	CMP ax, 10d
+	JGE letter_output
+	jmp done
+
+
+	number_output:
+	ADD ax, 48d
+	call writechar
+	jmp done
+
+	letter_output:
+	CMP ax,36d
+	JLE lowercase_output
+	CMP  ax, 62d
+	JLE uppercase_output
+
+	lowercase_output:
+	ADD ax, 87d
+	call writechar
+	jmp done
+	uppercase_output:
+	add ax, 28d
+	call writechar
+	
+
+
+	done:
+	cmp cx, counter
+	JG done_with_output
+	pop ax
+
+	Jmp output_loop
+	done_with_output:
+
+	ret
+	printNumOfAnyRadix ENDP
+
+
+
+
+end main
